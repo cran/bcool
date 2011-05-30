@@ -1,0 +1,291 @@
+% Part of the bcool package for R
+% Distributed under the BSD license: see bcool/COPYING
+%
+
+% \VignetteIndexEntry{bcool}
+% \VignetteDepends{bcool}
+% \VignettePackage{bcool}
+% \VignetteKeywords{MCMCglmm,amino acid properties,alignment,site identification,S4}
+\documentclass[11pt,a4paper]{article}
+\usepackage{a4wide,amsmath,color,fancyvrb,graphicx,thumbpdf}
+\definecolor{Red}{rgb}{0.7,0,0}
+\definecolor{Blue}{rgb}{0,0,0.8}
+\usepackage[colorlinks=true,linkcolor=Blue,citecolor=Blue,urlcolor=Blue]{hyperref}
+\usepackage[authoryear,round,longnamesfirst]{natbib}
+\usepackage{xspace}
+\usepackage{fancyhdr}
+\usepackage{lscape}
+\usepackage{Sweave}
+\usepackage{amsmath}
+\usepackage[spanish]{babel}
+
+
+\bibliographystyle{abbrvnat}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\let\code=\texttt
+\let\proglang=\textsf
+\newcommand{\pkg}[1]{{\normalfont\fontseries{b}\selectfont #1}}
+\newcommand{\email}[1]{\href{mailto:#1}{\normalfont\texttt{#1}}}
+
+\newcommand{\ktrans}{K^\text{trans}}
+\newcommand{\iaugc}[1]{\text{IAUGC}_{#1}}
+\newcommand{\kep}{k_\text{ep}}
+\newcommand{\vp}{v_\text{p}}
+
+\SweaveOpts{engine=R,eps=FALSE}
+
+\setlength{\parskip}{0.7ex plus0.1ex minus0.1ex}
+\setlength{\parindent}{0em}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\pagestyle{fancy}
+\lhead{H. Naya and L. Spangenberg}
+\chead{}
+\rhead{Using the {\tt bcool} Package}
+\lfoot{}
+\cfoot{\thepage}
+\rfoot{}
+\renewcommand{\headrulewidth}{1pt}
+\renewcommand{\footrulewidth}{1pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+ \title{bcool} 
+\author{Hugo Naya and Luc\'ia Spangenberg}
+
+\begin{document} 
+
+<<echo=false>>= 
+options(width=50) 
+@
+
+\maketitle
+
+\tableofcontents
+\newpage
+ 
+\section{Introduction}
+
+The method presented here identifies associations between amino acid changes in ``interesting" positions in an alignment (taking into account several amino acid properties) with some meta information (e. g. phenotypic data). The proposed method has general applicability to other organisms, different amino acid properties and different meta data. As a motivating example, we applied it to a set of $209$ bacterial strains belonging to several genera ($72$ genera, $117$ species) with the aim of finding amino acid changes that might be correlated with the pathogenicity of the bacteria. Several studies have shown that the pathogenicity character of different bacterial strains is determined by changes in amino acids causing changes in protein structure, and hence function (\cite{Sokurenko98}; \cite{conenello07}; \cite{marjuk10}). Thus, the pathogenicity character can also be conferred by specific genetic variations having an effect on protein function and not solely by the presence or absence of virulence factor genes as previously assumed (\cite{falkow97}). 
+The proposed screening method identify interesting sites in an alignment (which might confer the pathogenicity character to some bacteria) through the application of linear mixed models on different amino acid properties in each of those columns. Amino acid properties can be grouped according to an enourmous number of different characteristics, such as size, polarity, alpha helix or beta sheet propensity. However, a big number of different properties are highly correlated (Kawashima et al., 2008), clustering in only six groups: $\alpha$ and turn propensities (A), $\beta$ propensity (B), composition (C), hydrophobicity (H), physicochemical (P), and other properties (O) (Tomii and Kanehisa, 1996).
+Substitutions severely changing the value of some key properties (e. g. from polar to non-polar) tend to have a stronger effect on the tertiary structure, and probably in the function of the protein. If those substitutions are associated with the label (meta data) they define an interesting alignment column, which might be responsible for pathogenicity. The amino acid properties considered depend on the specific problem as will be discussed later. \\
+Assuming that after a first fast filtering (to reduce the computational time) we keep only the columns of potential interest, we will apply a linear mixed model on each of these columns. The phylogenetic mixed model of Lynch (PMM) partitions each phenotypic values into three components: 
+\begin{equation}
+\label{eq1}
+{\vec Y} = {\bf X}{\vec \beta} + {\bf Z}{\vec{a}} + {\vec{e}},
+\end{equation}
+where $\vec Y$ is the vector of observations (the dependent variable), $\vec \beta$ is the vector of fixed effects, $\vec a$ is the vector of phylogenetic heritable additive effects and $\vec e$ is the vector of independent and identically distributed residual errors. ${\bf X}$ is the incidence matrix that associates effects with observations. The number of columns of ${\bf X}$ are the number of fixed effect levels one wants to consider. {\bf Z} is the matrix that associates additive effects with observations. Both of them, {\bf X} and {\bf Z}, are matrices relating the observations $\vec Y$ to regressors the $\vec \beta$ and $\vec a$.\\
+Equation \eqref{eq1} is applicable to very general cases, especially ${\vec \beta}$ could be a vector holding the regressors for many different fixed effects and several link functions can be used for Y, extending the theory to generalized linear mixed models. In the case of a binary labeling (such as pathogen/non-pathogen), ${\bf X}$ contains the labels of the organisms, hence it has a dimension of $n \times 2$ ($n$ corresponds to the number of organisms considered). Vector $\vec{X}_{i1}$ corresponds to the pathogens and it holds $x_{i1}=1$ for pathogens, and $x_{i1}=0$ for non-pathogens. Vector $\vec{X}_{i2}$ stands for non-pathogens and it holds $x_{i2}=0$ for pathogens, and $x_{i2}=1$ for non-pathogens.\\
+Each $y_i$ is the value of the amino acid property considered in the organism $i$. $\bf Z$ is the matrix relating species to observations and in our case corresponds to a diagonal matrix of dimensions $n \times n$. Random effects are normally distributed with mean $0$ and variance matrices $\bf R$ and $\bf G$, corresponding to residual and additive effects, respectively. In the univariate case ${\bf R}={\bf I_n} \times \sigma_{e}^2$ and ${\bf G}={\bf A}\times \sigma_{a}^2$, $\sigma_{e}^2$ and $\sigma_{a}^2$ standing for residual and additive variances. The {\bf A} matrix represents the phylogenetic relations between the $n$ organisms. It holds evolutionary ``time" values $t_{ij}$ representing the time that organism $i$ shared with organism $j$ before speciation. The $a_i$ and $e_i$ values are the random organism effects and the error term for each organism, respectively. These two vectors, and the fixed effects, $\vec \beta$, are the ones to be estimated. $\vec \beta$ has dimension $2$ ($\beta_p$: pathogen, $\beta_{np}$: non-pathogen) in our binary case, since we are calculating the fixed effects of the pathogenicity. In this work, a Bayesian approach similar to the one presented by Naya {\it et al.} (2006) is chosen, hence not just a single value for the difference between $\vec \beta_{p}$ and $\vec \beta_{np}$ is determined, but a posterior probability distribution. Our package makes extensive usage of the main function implemented in the MCMCglmm package (\cite{Hadfield10}) and we strongly encourage users to read the corresponding documentation.\\
+
+\section{An example dataset}
+This document briefly describes an introduction to the usage of the \pkg{bcool} package, basically analyzing the same information that used \cite{Spangenberg11}, which is available in the package ("rpoS").
+
+
+<<echo=false>>= 
+options(continue=" ")
+set.seed(123456)
+@
+
+<<echo=FALSE>>= 
+suppressMessages(require("bcool"))
+@
+
+<<echo=TRUE>>= 
+library("bcool")
+data("aaindex")
+data("rpoS")
+
+
+@
+In \cite{Spangenberg11} an RpoS ($\sigma^{38}$) alignment was scanned searching for relevant columns, sites probably associated with pathogenicity. The labels (pathogenicity ``YES'' or ``No'') were obtained from the NCBI. The phylogenetic tree was reconstructed from the concatenated alignment of 7 groups of orthologous genes obtained from KEGG (K03070, K03073, K03076, K03087, K030106, K030110, K03217).
+The dataset includes a table with the pathogenicity labels ("labels"), the phylogenetic tree ("tree7") and the alignment ("rpoSalign") of the RpoS protein.
+
+\section{Analysis of the dataset}
+@
+Before initiate our analysis we need to define which amino acid properties are relevant for us. That is, which properties we consider that could provoke important changes in the function of the protein.
+While the properties to be used only depend on the users knowledge, a good starting point would be to consider out of the set of 500 properties included in the ``aaindex'', one representative of each of the six groups mentioned above ($\alpha$ and turn propensities, $\beta$ propensity, composition, hydrophobicity, physicochemical, and other properties).
+As we only wish to demonstrate the basical usage of the package and the time involved is directly proportional to the number of selected properties we will use only two properties here. 
+
+<<echo=TRUE>>=
+options(width=50) 
+prop<-c("CHOC760102","KYTJ820101")
+aaindex[prop]
+@
+
+\subsection{Instantiation of the APPT.list object}
+@
+We have now all the elements we require to instantiate the object of the main class \code{APPT.list} (Alignment, Phenotype, Properties, Tree):
+
+<<echo=TRUE>>=
+myAPPT.list<-new("APPT.list",alignment=rpoSalign,pheno=labels,
+properties=lapply(aaindex[prop],function(x) x$I),tree=tree7)
+head(columns(myAPPT.list))
+head(pheno(myAPPT.list))
+properties(myAPPT.list)
+tree(myAPPT.list)
+
+@
+\subsection{Fast approaches}
+@
+IMPORTANT: the alignment should be a matrix of one letter code. The properties are grouped in a list of vectors, each with 20 values, which names are the amino acids in three letter codes. You can use \pkg{seqinr} package to convert between formats if needed.
+ 
+Our object contains now the essential data to start with the analysis. Usually the complete analysis takes a while, then we can try to remove noninformative columns. In the paper of \cite{Spangenberg11} they tried three different fast approaches to select columns. Unfortunately, these approaches were unsucessfull. However, it is difficult to say that this occurs in general and that it is independent from data idiosyncracies. For this reason we implemented two of the three methods here (Conditional Entropy Reduction, CER and ANOVA) while the third is straightforward to implement (Entropy). Note that we can explicit two obvious restrictions that reduce the number of columns to analyze: the maximum number of gaps that we allow and the minimum number of different aminoacids in each column (below 2 has no sense). 
+
+<<>>=
+my.cer<-cer.APPT.list(myAPPT.list,class.var="pathogenicity",
+which.columns=NULL,nummin=2,maxngaps=10)
+head(sort(my.cer))
+tail(sort(my.cer))
+
+my.anova<-anovaAPPT.list(myAPPT.list,class.var=~pathogenicity,
+which.columns=NULL,nummin=2,maxngaps=10)
+sum(my.anova$hm.signif==4,na.rm=TRUE)
+which(my.anova$hm.signif==4)
+head(my.anova)
+
+@
+\subsection{Setting the model}
+@
+As the computation time is proportional to the number of columns our example will be run in only 3 columns (arbitrarily chosen): 
+
+<<>>=
+colu<-c(374:376)
+
+# define the priors and run the model
+# here the number of processors is one (count=1). 
+# increase this number if possible 
+prior<-list(R=list(V=1, nu=1), G=list(G1=list(V=1, nu=1)))
+myAPPT.list<-MCMCglmm.APPT.list(myAPPT.list, ~ -1+pathogenicity,
+	random.eff="spKEGG",nitt=1.5e3,burnin=5e2,prior,scale=FALSE,
+	parallel=TRUE,which.columns=colu,maxngaps=10,nummin=2,
+	count=1,pr=FALSE)
+
+
+@
+
+
+Now 
+\subsection{Monitoring convergence}
+
+@	
+After running the PMM we want to know in which properties and sites the model converged. For this task we can simply realize a Geweke diagnostic test for each site and property. The values obtained are the Z-scores for a test of equality of means between the first and last parts of the chain.
+
+<<echo=TRUE>>=
+matGwk<-matrix(0,length(columns(myAPPT.list)),
+length(properties(myAPPT.list)))
+for (i in 1:length(properties(myAPPT.list))){
+	for (j in 1:length(columns(myAPPT.list))){
+		matGwk[j,i]<-geweke.diag(as.mcmc(
+		multiMCMCglmm(myAPPT.list)[[i]][[j]]$Sol[,2]
+		-multiMCMCglmm(myAPPT.list)[[i]][[j]]$Sol[,1]
+		))$z
+	}
+}
+colnames(matGwk)<-names(properties(myAPPT.list))
+rownames(matGwk)<-columns(myAPPT.list)
+
+matGwk
+which(abs(matGwk)>2,TRUE)
+
+@
+\subsection{Summarizing the results}
+@ 
+We finally arrived at the point where we can summarize the results. The method \code{levelsMCMCglmm} report all levels available for contrast in the model. The output of the method \code{summaryAPPT.list} is a list with 6 elements. The first is a table with the gt0 values transformed via 2*(gt0-0.5). The second element is the table with the median effect sizes. The third report the summary statistic $\text{S}_{T_{j}}$. The fourth is the $\chi^2_m$ statistic, calculated from the number of samples taken from the MCMC sampling, with $m$ corresponding to the number of properties. The fifth is the $\chi^2_m$ statistic but now calculated from the effective sample size from each MCMC run. The last element report a table of amino acid frequencies for each site.
+
+<<>>=
+levelsMCMCglmm(myAPPT.list)
+my.summary<-summaryAPPT.list(myAPPT.list,
+contrast=c("pathogenicityYes","pathogenicityNo"),
+class.var="pathogenicity",what.prop=NULL)
+attributes(my.summary)
+
+my.summary$tabcor
+my.summary$tabSize
+my.summary$SumTr
+my.summary$ChiSq
+my.summary$ChiSq.eff
+my.summary$AAlist
+
+@
+Relevant columns can be selected simply ranking the columns by $\text{S}_{T_{j}}$, that is, by the statistical significance of the aggregated properties, or alternatively by aggregating effect sizes via the $\text{l}^{2}$ norm (see \citealt{Spangenberg11}). 
+
+\subsection{Bootstrapping relevant columns}
+@
+To check the relevance of the scores obtained for the selected columns we can perform a bootstrap in few of them (one each time). The distributions of bootstrap scores obtained is very similar for an ample range of $\text{S}_{T_{j}}$ scores and then you only need to do the bootstrap in few scores (for details see \cite{Spangenberg11}).
+
+\begin{center} 
+<<fig=TRUE ,echo=TRUE >>=
+myAPPT.list.boot<-bootMCMCglmm.APPT.list(
+	myAPPT.list, ~ -1+pathogenicity,boot=100,
+	contrast=c("pathogenicityYes","pathogenicityNo"),
+	random.eff="spKEGG",nitt=1.5e3,burnin=5e2,prior,
+	scale=FALSE,parallel=TRUE,what.prop=c(1,2),
+	which.column=c(376),maxngaps=10,nummin=2,count=1)
+
+boxplot(myAPPT.list.boot$SumTr,col="orange",notch=TRUE,ylim=c(0,1))
+par(new=TRUE)
+plot(my.summary$SumTr["376"],ylim=c(0,1),pch=17,col="red",xaxt="n",yaxt="n",cex=2,ylab="SumTr")
+
+@
+\end{center} 
+
+@
+\subsection{Estimating heritabilities}
+@
+Finally, as usual in the context of Bayesian MCMC, it is very easy to calculate heritability for each site and property. For the meaning of these estimates in the comparative method context see \cite{Lynch91}, \cite{Naya06} and \cite{Hadfield10}.
+
+<<>>=
+matH2<-matrix(0,length(columns(myAPPT.list)),
+length(properties(myAPPT.list)))
+for (i in 1:length(properties(myAPPT.list))){
+	for (j in 1:length(columns(myAPPT.list))){
+		matH2[j,i]<-median(
+		multiMCMCglmm(myAPPT.list)[[i]][[j]]$VCV[,1]
+		/(multiMCMCglmm(myAPPT.list)[[i]][[j]]$VCV[,1]+
+		multiMCMCglmm(myAPPT.list)[[i]][[j]]$VCV[,2]))
+	}
+}
+colnames(matH2)<-names(properties(myAPPT.list))
+rownames(matH2)<-columns(myAPPT.list)
+
+matH2
+
+@
+
+\section{Conclusions}
+\pkg{bcool} is a simple package implemented in \emph{S4}, which applies the PMM of \cite{Lynch91} in a Bayesian framework as proposed by \cite{Naya06}. The package allow to identify potentially interesting sites based on the statistical significance of the difference between classes of organisms, or directly by the effect sizes of the difference in relevant properties. 
+
+\section{Acknowledgments}
+@
+The authors are indebted to Florian Battke, Kay Nieselt, H\'ector Romero, Natalia Rego and Mart\'in Gra\~na for helpful suggestions, software testing and careful revision of the documentation.
+
+
+@
+\addcontentsline{toc}{section}{References}
+\begin{thebibliography}{1}
+
+\bibitem[Conenello et al., 2007]{conenello07} G. M. Conenello, D. Zamarin, L. A. Perrone, T. Tumpey and P. Palese (2007) A single mutation in the PB1-F2 of H5N1 (HK/97) and 1918 influenza A viruses contributes to increased virulence. {\it PLoS Pathog.}, {\bf 3}, 1414-1421.
+
+\bibitem[Falkow, 1997]{falkow97} S. Falkow (1997) What is a Pathogen? Developing a definition of a pathogen requires looking closely at the many complicated relationships that exist among organisms. {\it ASM News}, {\bf 63}, 359-365.
+
+\bibitem[Hadfield, 2010]{Hadfield10} J.D. Hadfield (2010) MCMC Methods for Multi-Response Generalized Linear Mixed Models: The {MCMCglmm} {R} Package. {\it Journal of Statistical Software} {\bf 33} {2}:1-22
+
+\bibitem[Lynch, 1991]{Lynch91} M. Lynch (1991) Methods for the analysis of comparative data in evolutionary biology. {\it Evolution} {\bf 45}:1065-1080
+
+\bibitem[Marjuki et al., 2010]{marjuk10}H. Marjuki, C. Scholtissek, J. Franks, N. J. Negovetich, J. R.  Aldridge, R. Salomon, D. Finkelstein and R. G. Webster (2010) Three amino acid changes in PB1-F2 of highly pathogenic H5N1 avian influenza virus affect pathogenicity in mallard ducks. {\it Arch Virol.}, {\bf 155}, 925-934.
+
+\bibitem[Naya et al., 2006]{Naya06} H. Naya, D. Gianola, H. Romero, J.I. Urioste and H. Musto (2006) Inferring Parameters Shaping Amino Acid Usage in Prokaryotic Genomes via Bayesian MCMC Methods. {\it Mol Biol Evol} {\bf 23}:203-211
+
+\bibitem[Sokurenko et al., 1998]{Sokurenko98} E. V. Sokurenko, V. Chesnokova, D. E. Dykhuizen, I. Ofek, X. WU, K. A. Krogfelt, C. Struve, M. A. Schembri and D. L. Hasty (1998) Pathogenic adaptation of Escherichia coli by natural variation of the FimH adhesin. {\it Proc. Natl. Acad. Sci. U. S. A.}, {\bf95}, 8922-8926.
+
+\bibitem[Spangenberg et al., 2011]{Spangenberg11} L. Spangenberg, F. Battke, M. Gra\~na, K. Nieselt and H. Naya (2011) Identifying associations between amino acid changes and meta information in alignments. {\it Bioinformatics} (accepted).
+
+
+\end{thebibliography}
+
+\end{document}

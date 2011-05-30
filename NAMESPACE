@@ -1,0 +1,24 @@
+exportPattern("^[[:alpha:]]+")
+exportMethods(
+    "MCMCglmm.APPT.list",
+    "RGBcolor.APPT.list",
+    "[",
+    "alignment",
+    "anovaAPPT.list",
+    "bootMCMCglmm.APPT.list",
+    "cer.APPT.list",
+    "columns",
+    "initialize",
+    "length",
+    "levelsMCMCglmm",
+    "multiMCMCglmm",
+    "pheno",
+    "properties",
+    "subsetMCMCglmm.list",
+    "summaryAPPT.list",
+    "tree" 
+)
+exportClasses(
+    "APPT.list",
+    "MCMCglmm.list" 
+)
