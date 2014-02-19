@@ -40,13 +40,18 @@ numeric vector, containing the conditional entropy values for all columns consid
 
 \examples{
 data("rpoS")
-data("aaindex")
+
+env <- new.env()
+utils::data("aaindex", package = "seqinr", envir = env)
+aaindex <- env$aaindex
+
 
 # select the properties to consider from "aaindex"
 prop<-c("JOND920102","KYTJ820101")
 
 # instantiate the APPT.list object
-myAPPT.list<-new("APPT.list",alignment=rpoSalign,pheno=labels,properties=lapply(aaindex[prop],function(x) x$I),tree=tree7)
+myAPPT.list<-new("APPT.list",alignment=rpoSalign,pheno=labels,
+properties=lapply(aaindex[prop],function(x) x$I),tree=tree7)
 
 # CER fast approach
 my.cer<-cer.APPT.list(myAPPT.list,class.var="pathogenicity")

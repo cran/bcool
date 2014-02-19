@@ -1,3 +1,6 @@
+import(MCMCglmm, methods, doMPI)
+importFrom("seqinr",aaa)
+
 exportPattern("^[[:alpha:]]+")
 exportMethods(
     "MCMCglmm.APPT.list",

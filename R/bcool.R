@@ -334,11 +334,10 @@ setMethod("MCMCglmm.APPT.list", c("APPT.list","formula","character","numeric","n
 		
 		if (parallel==TRUE) {
 			
-			suppressMessages(require(doMPI))
 			cl <- startMPIcluster(count=count,comm=7)
 			registerDoMPI(cl)
 			n<-1			
-			titi<-foreach(n=1:length(listaDep),.packages=c('ape','MCMCglmm','seqinr'))%dopar%{
+			titi<-foreach(n=1:length(listaDep),.packages=c('MCMCglmm'))%dopar%{
 				Y<-data.frame(DV=listaDep[[n]],pheno)
 			    Y$animal<-Y[,random.eff]
 			    MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree,nitt=nitt,prior=prior,scale=scale,burnin=burnin,verbose=FALSE,pr=pr)
@@ -533,11 +532,10 @@ setMethod("bootMCMCglmm.APPT.list", c("APPT.list","formula","numeric","character
 				
 		if (parallel==TRUE) {
 			
-			suppressMessages(require(doMPI))
 			cl <- startMPIcluster(count=count,comm=7)
 			registerDoMPI(cl)
 			n<-1			
-			titi<-foreach(n=1:boot,.packages=c('ape','MCMCglmm','seqinr'))%dopar%{
+			titi<-foreach(n=1:boot,.packages=c('MCMCglmm'))%dopar%{
 				Y<-data.frame(DV=listaDep[lisa[[n]]],pheno)
 			    Y$animal<-Y[,random.eff]
 			    MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree,nitt=nitt,prior=prior,scale=scale,burnin=burnin,verbose=FALSE)

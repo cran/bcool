@@ -7,7 +7,8 @@ Bootstrap function for significance assessment
 After all calculations, one might want to validate the significance of the chosen columns. A bootstrap method performed on columns selected by the user is applied permutating the observations in each iteration. In each step the scores are recalculated for each property and the integrated score is determined. Hence, an empiric random distribution of the score is determined. Score values above the bootstrap scores are significant.   
 }
 \usage{
-bootMCMCglmm.APPT.list(x, class.var, boot, contrast, random.eff, nitt, burnin, prior, scale, parallel, what.prop, which.column, maxngaps, nummin, count, ...)
+bootMCMCglmm.APPT.list(x, class.var, boot, contrast, random.eff, nitt, burnin, prior, 
+scale, parallel, what.prop, which.column, maxngaps, nummin, count, ...)
 }
 \arguments{
   \item{x}{
@@ -76,13 +77,19 @@ The same list as the summary.APPTlist function. Each entry might be smaller sinc
 
 \examples{
 data("rpoS")
-data("aaindex")
+
+env <- new.env()
+utils::data("aaindex", package = "seqinr", envir = env)
+aaindex <- env$aaindex
+
+
 
 # select the properties to consider from "aaindex"
 prop<-c("JOND920102","KYTJ820101")
 
 # instantiate the APPT.list object
-myAPPT.list<-new("APPT.list",alignment=rpoSalign,pheno=labels,properties=lapply(aaindex[prop],function(x) x$I),tree=tree7)
+myAPPT.list<-new("APPT.list",alignment=rpoSalign,pheno=labels,
+properties=lapply(aaindex[prop],function(x) x$I),tree=tree7)
 colu<-c(375,376)
 
 # define the priors and run the model
@@ -90,7 +97,11 @@ colu<-c(375,376)
 # increase this number if possible 
 \dontrun{
 prior<-list(R=list(V=1, nu=1), G=list(G1=list(V=1, nu=1)))
-myAPPT.list.boot<-bootMCMCglmm.APPT.list(myAPPT.list, ~ -1+pathogenicity,boot=100,contrast=c("pathogenicityYes","pathogenicityNo"),random.eff="spKEGG",nitt=2.5e2,burnin=5e2,prior,scale=FALSE,parallel=TRUE,what.prop=c(1,2),which.column=c(376),maxngaps=10,nummin=2,count=1)
+myAPPT.list.boot<-bootMCMCglmm.APPT.list(myAPPT.list, ~ -1+pathogenicity,
+boot=100,contrast=c("pathogenicityYes","pathogenicityNo"),
+random.eff="spKEGG",nitt=2.5e2,burnin=5e2,prior,scale=FALSE,
+parallel=TRUE,what.prop=c(1,2),which.column=c(376),maxngaps=10,
+nummin=2,count=1)
 }
 
 }

@@ -31,13 +31,18 @@ A matrix containing colors according to the RGB scale
 
 \examples{
 data("rpoS")
-data("aaindex")
+
+env <- new.env()
+utils::data("aaindex", package = "seqinr", envir = env)
+aaindex <- env$aaindex
+
 
 # select the properties to consider from "aaindex"
 prop<-c("JOND920102","KYTJ820101")
 
 # instantiate the APPT.list object
-myAPPT.list<-new("APPT.list",alignment=rpoSalign,pheno=labels,properties=lapply(aaindex[prop],function(x) x$I),tree=tree7)
+myAPPT.list<-new("APPT.list",alignment=rpoSalign,pheno=labels,
+properties=lapply(aaindex[prop],function(x) x$I),tree=tree7)
 colu<-c(375,376)
 
 # define the priors and run the model
@@ -45,7 +50,10 @@ colu<-c(375,376)
 # increase this number if possible 
 \dontrun{
 prior<-list(R=list(V=1, nu=1), G=list(G1=list(V=1, nu=1)))
-myAPPT.list<-MCMCglmm.APPT.list(myAPPT.list, ~ -1+pathogenicity,random.eff="spKEGG",nitt=1.5e2,burnin=5e1,prior,scale=FALSE,parallel=TRUE,which.columns=colu,maxngaps=10,nummin=2,count=1,pr=FALSE)
+myAPPT.list<-MCMCglmm.APPT.list(myAPPT.list, ~ -1+pathogenicity,
+random.eff="spKEGG",nitt=1.5e2,burnin=5e1,prior,scale=FALSE,
+parallel=TRUE,which.columns=colu,maxngaps=10,
+nummin=2,count=1,pr=FALSE)
 
 # function that return a matrix of RGB colors for the columns in the alignment
 matRGB<-RGBcolor.APPT.list(myAPPT.list,which.prop=0,FALSE)
