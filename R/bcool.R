@@ -280,12 +280,12 @@ setMethod("anovaAPPT.list", c("APPT.list","formula","ANY","ANY","ANY"),
 	
 	for (m in 1:length(prop)) {
 	
-		listaDep<-lapply(col2anal,function(z) prop[[m]][aaa(toupper(ma.red[,z]))])
+		listaDep<-lapply(col2anal,function(z) prop[[m]][suppressWarnings(aaa(toupper(ma.red[,z])))])
 		
 		for (i in 1:length(listaDep)) {
 		      Y<-data.frame(DV=listaDep[[i]],pheno(x))
 		      modelD<-lm(formula(paste("DV ~", as.character(class.var)[2])),data=Y)
-		      tab.anova[i,m]<-summary(modelD)$coefficients[2,4]
+		      tab.anova[i,m]<-suppressWarnings(summary(modelD)$coefficients[2,4])
 		}
 	}
 	colnames(tab.anova)<-names(properties(x))
@@ -327,7 +327,7 @@ setMethod("MCMCglmm.APPT.list", c("APPT.list","formula","character","numeric","n
 	toto<-list()
 	for (m in 1:length(prop)) {
 	
-		listaDep<-lapply(col2anal,function(z) prop[[m]][aaa(toupper(ma.red[,z]))])
+		listaDep<-lapply(col2anal,function(z) prop[[m]][suppressWarnings(aaa(toupper(ma.red[,z])))])
 		
 		titi<-list()
 		testObject <- function(object){exists(as.character(substitute(object)))}
@@ -340,7 +340,7 @@ setMethod("MCMCglmm.APPT.list", c("APPT.list","formula","character","numeric","n
 			titi<-foreach(n=1:length(listaDep),.packages=c('MCMCglmm'))%dopar%{
 				Y<-data.frame(DV=listaDep[[n]],pheno)
 			    Y$animal<-Y[,random.eff]
-			    MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree,nitt=nitt,prior=prior,scale=scale,burnin=burnin,verbose=FALSE,pr=pr)
+			    MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree,nitt=nitt,prior=prior[[m]],scale=scale,burnin=burnin,verbose=FALSE,pr=pr)
 			     
 			}
 			closeCluster(cl)
@@ -349,7 +349,7 @@ setMethod("MCMCglmm.APPT.list", c("APPT.list","formula","character","numeric","n
 			for (i in 1:length(listaDep)) {
 			      Y<-data.frame(DV=listaDep[[i]],pheno(x))
 			      Y$animal<-Y[,random.eff]
-			      modelD<-MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree(x),nitt=nitt,prior=prior,scale=scale,burnin=burnin,verbose=FALSE,pr=pr)
+			      modelD<-MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree(x),nitt=nitt,prior=prior[[m]],scale=scale,burnin=burnin,verbose=FALSE,pr=pr)
 			      titi[[i]]<-modelD
 			}
 		}
@@ -488,7 +488,7 @@ setMethod("RGBcolor.APPT.list", c("APPT.list","numeric","logical"),
 	ma.col<-matrix("",dim(ma.red)[1],dim(ma.red)[2])
 	for (j in 1:dim(ma.red)[2]) {
 		
-		ma.col[,j]<-colAA[aaa(ma.red[,j])]	
+		ma.col[,j]<-colAA[suppressWarnings(aaa(ma.red[,j]))]	
 	}
 	rownames(ma.col)<-rownames(ma.red)
 	colnames(ma.col)<-columns(x)
@@ -524,7 +524,7 @@ setMethod("bootMCMCglmm.APPT.list", c("APPT.list","formula","numeric","character
 	toto<-list()
 	for (m in 1:length(prop)) {
 	
-		listaDep<-prop[[m]][aaa(toupper(ma.red))]
+		listaDep<-prop[[m]][suppressWarnings(aaa(toupper(ma.red)))]
 
 		titi<-list()
 		testObject <- function(object){exists(as.character(substitute(object)))}
@@ -538,7 +538,7 @@ setMethod("bootMCMCglmm.APPT.list", c("APPT.list","formula","numeric","character
 			titi<-foreach(n=1:boot,.packages=c('MCMCglmm'))%dopar%{
 				Y<-data.frame(DV=listaDep[lisa[[n]]],pheno)
 			    Y$animal<-Y[,random.eff]
-			    MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree,nitt=nitt,prior=prior,scale=scale,burnin=burnin,verbose=FALSE)
+			    MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree,nitt=nitt,prior=prior[[m]],scale=scale,burnin=burnin,verbose=FALSE)
 			    
 			}
 			closeCluster(cl)
@@ -547,7 +547,7 @@ setMethod("bootMCMCglmm.APPT.list", c("APPT.list","formula","numeric","character
 			for (i in 1:boot) {
 			      Y<-data.frame(DV=sample(listaDep),pheno(x))
 			      Y$animal<-Y[,random.eff]
-			      modelD<-MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree(x),nitt=nitt,prior=prior,scale=scale,burnin=burnin,verbose=FALSE)
+			      modelD<-MCMCglmm(formula(paste("DV ~", as.character(class.var)[2])),data=Y,random=~animal,family="gaussian",rcov=~units,pedigree=tree(x),nitt=nitt,prior=prior[[m]],scale=scale,burnin=burnin,verbose=FALSE)
 			      titi[[i]]<-modelD
 			}
 		}

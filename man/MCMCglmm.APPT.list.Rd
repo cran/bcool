@@ -89,7 +89,8 @@ colu<-c(375,376)
 # here the number of processors is one (count=1). 
 # increase this number if possible 
 \dontrun{
-prior<-list(R=list(V=1, nu=1), G=list(G1=list(V=1, nu=1)))
+prior<-list(list(R=list(V=40, nu=1), G=list(G1=list(V=40, nu=1))),
+list(R=list(V=3, nu=1), G=list(G1=list(V=3, nu=1))))
 myAPPT.list<-MCMCglmm.APPT.list(myAPPT.list, ~ -1+pathogenicity,
 random.eff="spKEGG",nitt=1.5e2,burnin=5e1,prior,scale=FALSE,
 parallel=TRUE,which.columns=colu,maxngaps=10,nummin=2,

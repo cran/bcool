@@ -137,7 +137,7 @@ tree(myAPPT.list)
 @
 IMPORTANT: the alignment should be a matrix of one letter code. The properties are grouped in a list of vectors, each with 20 values, which names are the amino acids in three letter codes. You can use \pkg{seqinr} package to convert between formats if needed.
  
-Our object contains now the essential data to start with the analysis. Usually the complete analysis takes a while, then we can try to remove noninformative columns. In the paper of \cite{Spangenberg11} they tried three different fast approaches to select columns. Unfortunately, these approaches were unsucessfull. However, it is difficult to say that this occurs in general and that it is independent from data idiosyncracies. For this reason we implemented two of the three methods here (Conditional Entropy Reduction, CER and ANOVA) while the third is straightforward to implement (Entropy). Note that we can explicit two obvious restrictions that reduce the number of columns to analyze: the maximum number of gaps that we allow and the minimum number of different aminoacids in each column (below 2 has no sense). 
+Our object contains now the essential data to start with the analysis. Usually the complete analysis takes a while, then we can try to remove noninformative columns. In the paper of \cite{Spangenberg11} they tried three different fast approaches to select columns. Unfortunately, these approaches were unsucessful. However, it is difficult to say that this occurs in general and that it is independent from data idiosyncracies. For this reason we implemented two of the three methods here (Conditional Entropy Reduction, CER and ANOVA) while the third is straightforward to implement (Entropy). Note that we can explicit two obvious restrictions that reduce the number of columns to analyze: the maximum number of gaps that we allow and the minimum number of different aminoacids in each column (below 2 has no sense). 
 
 <<>>=
 my.cer<-cer.APPT.list(myAPPT.list,class.var="pathogenicity",
@@ -162,11 +162,12 @@ colu<-c(374:376)
 # define the priors and run the model
 # here the number of processors is one (count=1). 
 # increase this number if possible 
-prior<-list(R=list(V=1, nu=1), G=list(G1=list(V=1, nu=1)))
+prior<-list(list(R=list(V=40, nu=1), G=list(G1=list(V=40, nu=1))),
+list(R=list(V=3, nu=1), G=list(G1=list(V=3, nu=1))))
 myAPPT.list<-MCMCglmm.APPT.list(myAPPT.list, ~ -1+pathogenicity,
 	random.eff="spKEGG",nitt=1.5e3,burnin=5e2,prior,scale=FALSE,
 	parallel=TRUE,which.columns=colu,maxngaps=10,nummin=2,
-	count=1,pr=FALSE)
+	count=3,pr=FALSE)
 
 
 @
@@ -226,13 +227,20 @@ To check the relevance of the scores obtained for the selected columns we can pe
 myAPPT.list.boot<-bootMCMCglmm.APPT.list(
 	myAPPT.list, ~ -1+pathogenicity,boot=100,
 	contrast=c("pathogenicityYes","pathogenicityNo"),
-	random.eff="spKEGG",nitt=1.5e3,burnin=5e2,prior,
+	random.eff="spKEGG",nitt=1.5e4,burnin=5e3,prior,
 	scale=FALSE,parallel=TRUE,what.prop=c(1,2),
-	which.column=c(376),maxngaps=10,nummin=2,count=1)
+	which.column=c(376),maxngaps=10,nummin=2,count=3)
 
 boxplot(myAPPT.list.boot$SumTr,col="orange",notch=TRUE,ylim=c(0,1))
 par(new=TRUE)
-plot(my.summary$SumTr["376"],ylim=c(0,1),pch=17,col="red",xaxt="n",yaxt="n",cex=2,ylab="SumTr")
+plot(my.summary$SumTr["374"],ylim=c(0,1),pch=16,col="blue",xaxt="n",
+yaxt="n",cex=1.5,ylab="")
+par(new=TRUE)
+plot(my.summary$SumTr["375"],ylim=c(0,1),pch=17,col="black",xaxt="n",
+yaxt="n",cex=1.5,ylab="")
+par(new=TRUE)
+plot(my.summary$SumTr["376"],ylim=c(0,1),pch=18,col="red",xaxt="n",
+yaxt="n",cex=1.5,ylab="SumTr")
 
 @
 \end{center} 

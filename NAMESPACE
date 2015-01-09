@@ -1,4 +1,4 @@
-import(MCMCglmm, methods, doMPI)
+import(MCMCglmm, methods, doMPI,foreach)
 importFrom("seqinr",aaa)
 
 exportPattern("^[[:alpha:]]+")
